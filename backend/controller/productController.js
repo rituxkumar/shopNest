@@ -30,6 +30,8 @@ const createProduct = async (req, res) => {
     let imageUrl = "";
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path);
+      console.log(result);
+
       imageUrl = result.secure_url;
     }
 
@@ -44,6 +46,63 @@ const createProduct = async (req, res) => {
     const savedProduct = await product.save();
     res.status(201).json(savedProduct);
   } catch (error) {
-    res.status(500).json({ message: "server Error" });
+    console.error(error);
+    res.status(500).json({ message: error.message,stack:error.stack });
   }
+};
+
+const updateProduct = async (req, res) => {
+  try {
+    const { name, description, price, category, stock } = req.body;
+    const product = await Product.findById(req.params.id);
+
+    if (product) {
+      product.name = name || product.name;
+      product.description = description || product.description;
+      product.price = price || product.price;
+      product.category = category || product.category;
+      product.stock = stock || product.stock;
+
+      // if (req.file) {
+      //   const result = await cloudinary.uploader.upload(req.file.path);
+      //   console.log(result);
+      //   product.imageUrl = result.secure_url;
+      // }
+
+      if (req.file) {
+        imageUrl = req.file.path;
+      }
+
+
+
+      const updateProduct = await product.save();
+      res.json(updateProduct);
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (product) {
+      await product.remove();
+      res.json({ message: "Product removed" });
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+module.exports = {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 };
